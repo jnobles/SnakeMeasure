@@ -27,13 +27,41 @@ class ImageView(tk.Toplevel):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.snake_dots = []
+        self.snake_line = None
+        self.snake_spline = None
+        self.canvas = tk.Canvas(self)
         self.create_view()
 
     def create_dot(self, event):
         dot_size = 5
-        self.canvas.create_oval(event.x-(dot_size/2), event.y-(dot_size/2), event.x+(dot_size/2), event.y+(dot_size/2), fill="red")
+        dot = self.canvas.create_oval(event.x-(dot_size/2), event.y-(dot_size/2), event.x+(dot_size/2), event.y+(dot_size/2), fill="red")
+        self.snake_dots.append([dot, [event.x, event.y]])
+        self.update_line()
+
+    def remove_dot(self, event):
+        try:
+            dot = self.snake_dots[-1][0]
+        except IndexError:
+            pass
+        else:
+            self.canvas.delete(dot)
+            self.snake_dots.pop()
+            self.update_line()
+
+    def update_line(self):
+        try:
+            coords = [coord for point in self.snake_dots for coord in point[1]]
+            self.canvas.delete(self.snake_line)
+            self.canvas.delete(self.snake_spline)
+            self.snake_line = self.canvas.create_line(coords, fill="blue", width=2)
+            self.snake_spline = self.canvas.create_line(coords, fill="red", width=2, smooth=True)
+        except (tk.TclError, IndexError):
+            pass
 
     def create_view(self):
-        self.canvas = tk.Canvas(self)
+        self.rowconfigure(0,  weight=1)
+        self.columnconfigure(0, weight=1)
         self.canvas.grid(row=0, column=0, sticky="nsew")
         self.canvas.bind("<Button-1>", self.create_dot)
+        self.canvas.bind("<Button-3>", self.remove_dot)
